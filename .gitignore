@@ -1,0 +1,55 @@
+# --- Terraform ---
+
+# Provider binaries e moduli scaricati da "terraform init"
+**/.terraform/*
+
+# State: contiene dati sensibili in chiaro (chiavi, password, ID risorse)
+*.tfstate
+*.tfstate.*
+
+# Log di crash
+crash.log
+crash.*.log
+
+# Variabili: possono contenere segreti. Ignorate per default...
+*.tfvars
+*.tfvars.json
+
+# ...tranne i file didattici dei lab (valori non sensibili, usati con -var-file)
+!labs/lab*/dev.tfvars
+!labs/lab*/test.tfvars
+!labs-aws/lab*/dev.tfvars
+!labs-aws/lab*/test.tfvars
+
+# Override locali (di solito con credenziali o config di sviluppo)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Piani salvati (possono contenere segreti)
+*.tfplan
+tfplan
+
+# Config CLI locale
+.terraformrc
+terraform.rc
+
+# NB: .terraform.lock.hcl va COMMITTATO (blocca le versioni dei provider)
+
+# --- Segreti / ambiente ---
+.env
+.env.*
+*.pem
+*.key
+
+# --- Cloud ---
+.aws/
+.azure/
+
+# --- Editor / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+~$*
