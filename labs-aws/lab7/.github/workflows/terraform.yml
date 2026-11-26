@@ -1,0 +1,54 @@
+name: terraform
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write # necessario per OIDC verso AWS
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  TF_VAR_student: ${{ vars.TF_STUDENT }}
+  TF_IN_AUTOMATION: "true"
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - uses: hashicorp/setup-terraform@v4
+      - run: terraform fmt -check -recursive
+      - run: terraform init -input=false -backend-config=backend.hcl
+      - run: terraform validate
+      - run: terraform test
+      - run: terraform plan -input=false -out=tfplan
+      - uses: actions/upload-artifact@v7
+        with:
+          name: tfplan
+          path: tfplan
+
+  apply:
+    needs: plan
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production # richiede approvazione manuale
+    steps:
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - uses: hashicorp/setup-terraform@v4
+      - uses: actions/download-artifact@v8
+        with:
+          name: tfplan
+          path: .
+      - run: terraform init -input=false -backend-config=backend.hcl
+      - run: terraform apply -input=false tfplan
